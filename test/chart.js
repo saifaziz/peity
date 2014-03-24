@@ -1,4 +1,5 @@
 var child_process = require('child_process')
+  , queue = require('queue-async')
   , charts = require('./charts.json')
   , screenshot = __dirname + '/bin/screenshot'
   , port
@@ -39,8 +40,8 @@ Chart.prototype.compare = function(callback) {
 
   console.log(command)
 
-  child_process.exec(command, function(err, _, stderr) {
-    console.log(err, _, stderr)
+  child_process.exec(command, function(err, stdout, stderr) {
+    console.log(err, stdout, stderr)
 
     if (err) {
       if (err.code == 1) {
@@ -69,12 +70,35 @@ Chart.prototype.optionsString = function() {
 }
 
 Chart.prototype.screenshot = function(savePath, callback) {
-  child_process.execFile(screenshot, [
-    this.url(),
+  var identify = [
+    'identify',
+    savePath
+  ].join(' ')
+
+  var crop = [
+    'convert',
     savePath,
-    this.width,
-    this.height
-  ], callback)
+    '-extent ' + this.width + 'x' + this.height,
+    savePath
+  ].join(' ')
+
+  var ben = function(cb) {
+    child_process.exec(identify, function(err, stdout, stderr) {
+      console.log(err, stdout, stderr)
+      cb()
+    })
+  }
+
+  queue(1)
+    .defer(child_process.execFile, screenshot, [
+      this.url(),
+      savePath,
+      this.width,
+      this.height
+    ])
+    .defer(ben)
+    .defer(child_process.exec, crop)
+    .await(callback)
 }
 
 Chart.prototype.url = function() {
