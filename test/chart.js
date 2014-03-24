@@ -37,7 +37,11 @@ Chart.prototype.compare = function(callback) {
     this.comparisonPath
   ].join(' ')
 
+  console.log(command)
+
   child_process.exec(command, function(err, _, stderr) {
+    console.log(err, _, stderr)
+
     if (err) {
       if (err.code == 1) {
         // `compare` exits with 1 if the images are not identical.
