@@ -70,25 +70,6 @@ Chart.prototype.optionsString = function() {
 }
 
 Chart.prototype.screenshot = function(savePath, callback) {
-  var identify = [
-    'identify',
-    savePath
-  ].join(' ')
-
-  var crop = [
-    'convert',
-    savePath,
-    '-extent ' + this.width + 'x' + this.height,
-    savePath
-  ].join(' ')
-
-  var ben = function(cb) {
-    child_process.exec(identify, function(err, stdout, stderr) {
-      console.log(err, stdout, stderr)
-      cb()
-    })
-  }
-
   queue(1)
     .defer(child_process.execFile, screenshot, [
       this.url(),
@@ -96,8 +77,6 @@ Chart.prototype.screenshot = function(savePath, callback) {
       this.width,
       this.height
     ])
-    .defer(ben)
-    .defer(child_process.exec, crop)
     .await(callback)
 }
 
